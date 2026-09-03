@@ -31,12 +31,18 @@ def render_video(audio_path: Path, captions_path: Path, out_video_path: Path) ->
     out_video_path.parent.mkdir(parents=True, exist_ok=True)
 
     # ffmpeg's filtergraph parser treats ':' and '\' specially inside filter args,
-    # so escape the subtitle path before splicing it into -vf.
-    ass_filter_path = str(captions_path).replace("\\", "/").replace(":", "\\:")
+    # so escape paths before splicing them into -vf. fontsdir must be passed
+    # explicitly — libass doesn't pick up assets/fonts/*.ttf on its own and will
+    # silently fall back to a system font otherwise.
+    def _escape(path: Path) -> str:
+        return str(path).replace("\\", "/").replace(":", "\\:")
+
+    ass_filter_path = _escape(captions_path)
+    fontsdir = _escape(config.CAPTION_FONT.parent)
     vf = (
         f"scale={config.VIDEO_WIDTH}:{config.VIDEO_HEIGHT}:force_original_aspect_ratio=increase,"
         f"crop={config.VIDEO_WIDTH}:{config.VIDEO_HEIGHT},"
-        f"ass='{ass_filter_path}'"
+        f"ass='{ass_filter_path}':fontsdir='{fontsdir}'"
     )
 
     cmd = [

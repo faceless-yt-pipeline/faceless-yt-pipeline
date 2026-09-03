@@ -14,7 +14,7 @@ WrapStyle: 0
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,{font},{size},{color},{highlight},{outline},&H00000000,1,0,0,0,100,100,0,0,1,4,0,2,60,60,{margin_v},1
+Style: Default,{font},{size},{color},{highlight},{outline},&H00000000,0,0,0,0,100,100,0,0,1,4,0,2,60,60,{margin_v},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -52,7 +52,7 @@ def build_captions(words: list[dict], out_ass_path: Path) -> None:
     lines = [_ASS_HEADER.format(
         width=config.VIDEO_WIDTH,
         height=config.VIDEO_HEIGHT,
-        font=config.CAPTION_FONT.stem,
+        font=config.CAPTION_FONT_FAMILY,
         size=config.CAPTION_FONT_SIZE,
         color=_ass_style_color(config.CAPTION_FONT_COLOR),
         highlight=_ass_style_color(config.CAPTION_HIGHLIGHT_COLOR),

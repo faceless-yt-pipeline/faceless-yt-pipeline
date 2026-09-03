@@ -37,6 +37,9 @@ EDGE_TTS_RATE = "+0%"   # e.g. "+10%" to speed up, "-10%" to slow down
 # --- Captions ---
 CAPTION_WORDS_PER_CHUNK = 4
 CAPTION_FONT = ASSETS_DIR / "fonts" / "Anton-Regular.ttf"
+CAPTION_FONT_FAMILY = "Anton"  # the font's actual family name, not its filename — libass
+                                 # matches on this. Check with fontTools if you swap fonts:
+                                 # TTFont(path)['name'].getDebugName(1)
 CAPTION_FONT_SIZE = 90
 CAPTION_FONT_COLOR = "FFFFFF"      # RGB hex, white
 CAPTION_HIGHLIGHT_COLOR = "FFD700"  # RGB hex, gold — active word
@@ -57,7 +60,6 @@ THUMB_FONT_SIZE = 110
 THUMB_FONT_COLOR = (255, 255, 255)
 THUMB_STROKE_COLOR = (0, 0, 0)
 THUMB_STROKE_WIDTH = 6
-THUMB_MAX_CHARS_PER_LINE = 18
 
 # --- YouTube upload ---
 YT_CLIENT_SECRETS_FILE = ROOT_DIR / "client_secrets.json"
