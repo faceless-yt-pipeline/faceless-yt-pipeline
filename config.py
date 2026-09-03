@@ -29,11 +29,10 @@ STORY_HISTORY_SIZE = 200  # how many past titles to remember, to steer the model
 TARGET_WORDS_PER_MINUTE = 150
 TARGET_VIDEO_MINUTES = (2, 6)  # (min, max) target narration length
 
-# --- Voiceover (ElevenLabs) ---
-ELEVENLABS_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"  # default "Rachel" voice — swap for your own
-ELEVENLABS_MODEL_ID = "eleven_multilingual_v2"
-ELEVENLABS_STABILITY = 0.45
-ELEVENLABS_SIMILARITY_BOOST = 0.75
+# --- Voiceover (edge-tts — free, no API key) ---
+# Full voice list: run `edge-tts --list-voices` after installing requirements.
+EDGE_TTS_VOICE = "en-US-AriaNeural"
+EDGE_TTS_RATE = "+0%"   # e.g. "+10%" to speed up, "-10%" to slow down
 
 # --- Captions ---
 CAPTION_WORDS_PER_CHUNK = 4

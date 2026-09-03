@@ -22,8 +22,11 @@ using Reddit data for AI/commercial purposes without separate written approval.)
 
 2. API keys — set these as environment variables (see `.env.example`):
    * `ANTHROPIC_API_KEY` — from console.anthropic.com
-   * `ELEVENLABS_API_KEY` — from elevenlabs.io
    * YouTube: download OAuth `client_secrets.json` from Google Cloud Console into the project root (see comments in `scripts/upload_video.py`)
+
+   Voiceover uses `edge-tts` (Microsoft Edge's free online neural voices) — no API key needed. Run
+   `edge-tts --list-voices` after installing dependencies to see available voices, then set
+   `EDGE_TTS_VOICE` in `config.py`.
 
 3. Assets — add before running:
    * `assets/backgrounds/*.mp4` — royalty-free loopable background footage (satisfying clips, gameplay, ambient scenes — search Pexels/Storyblocks)
