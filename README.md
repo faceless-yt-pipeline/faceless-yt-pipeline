@@ -1,6 +1,11 @@
 # Faceless YouTube Pipeline (Storytelling/Narration)
 
-End-to-end automation: Reddit story → script → voiceover → captions → video → thumbnail → YouTube upload.
+End-to-end automation: AI-generated story → voiceover → captions → video → thumbnail → YouTube upload.
+
+Stories are entirely invented by Claude — nothing is scraped or adapted from Reddit or any other
+platform. (An earlier version of this pipeline sourced stories from Reddit; that approach was
+dropped after Reddit denied API access, citing their Responsible Builder Policy's restriction on
+using Reddit data for AI/commercial purposes without separate written approval.)
 
 ## Setup
 
@@ -16,7 +21,6 @@ End-to-end automation: Reddit story → script → voiceover → captions → vi
    * Windows: download from ffmpeg.org and add to PATH
 
 2. API keys — set these as environment variables (see `.env.example`):
-   * `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET` — create an app at reddit.com/prefs/apps
    * `ANTHROPIC_API_KEY` — from console.anthropic.com
    * `ELEVENLABS_API_KEY` — from elevenlabs.io
    * YouTube: download OAuth `client_secrets.json` from Google Cloud Console into the project root (see comments in `scripts/upload_video.py`)
@@ -26,18 +30,18 @@ End-to-end automation: Reddit story → script → voiceover → captions → vi
    * `assets/thumb_template.png` — a base thumbnail template image
    * `assets/fonts/Anton-Regular.ttf` — or any bold font you like (Google Fonts)
 
-4. Edit `config.py` — subreddits, voice ID, script style, upload schedule.
+4. Edit `config.py` — story genres/style, voice ID, upload schedule.
 
 ## Running
 
 ```bash
-# Full pipeline: source -> script -> voice -> captions -> video -> thumbnail -> upload
+# Full pipeline: story -> voice -> captions -> video -> thumbnail -> upload
 python main.py --mode full
 
-# Stop after script generation so you can review/edit it by hand
+# Stop after story generation so you can review/edit it by hand
 python main.py --mode review
 
-# Generate script + audio only (no video render, no upload) — fast iteration
+# Generate story + audio only (no video render, no upload) — fast iteration
 python main.py --mode dry-run
 ```
 
@@ -55,5 +59,5 @@ Once you trust the pipeline, run it on a cron job / GitHub Actions / cloud sched
 
 * Start uploads as "private" or "unlisted" (already default in `config.py`) until you've watched a few end-to-end outputs and trust the pipeline not to publish something broken or off-brand.
 * YouTube's policy on mass-produced/repetitive content has tightened — fully unattended channels risk demonetization or suppression. Keeping the `review` mode checkpoint (even skimming the script/thumbnail before `full` runs) meaningfully reduces this risk and costs you ~2 minutes/video.
-* Attribution/reuse: even lightly-transformative narration of someone else's Reddit post can raise reuse/copyright questions. Consider crediting the subreddit/author in the description, and check each subreddit's rules on content reuse before scaling this up.
+* Since stories are AI-generated rather than true accounts, don't present them as real events in titles/descriptions — check YouTube's disclosure requirements for altered/synthetic content if that's ever ambiguous for your framing.
 * Caption styling, background clip selection logic, and the thumbnail template are deliberately simple — that's the highest-leverage place to spend manual creative effort since it's what actually drives CTR/retention.

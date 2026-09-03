@@ -9,9 +9,8 @@ from dotenv import load_dotenv
 
 import config
 from scripts import (
-    fetch_reddit,
     generate_captions,
-    generate_script,
+    generate_story,
     generate_thumbnail,
     render_video,
     upload_video,
@@ -40,10 +39,10 @@ def run(mode: str) -> None:
     run_dir.mkdir(parents=True, exist_ok=True)
     logger.info("=== Run %s (mode=%s) ===", run_id, mode)
 
-    story = fetch_reddit.fetch_story()
-    (run_dir / "source.json").write_text(json.dumps(story, indent=2), encoding="utf-8")
+    story = generate_story.generate_story()
+    (run_dir / "story.json").write_text(json.dumps(story, indent=2), encoding="utf-8")
 
-    script = generate_script.generate_script(story)
+    script = story["script"]
     (run_dir / "script.txt").write_text(script, encoding="utf-8")
 
     if mode == "review":
@@ -71,7 +70,7 @@ def run(mode: str) -> None:
 
     description = (
         f"{' '.join(script.split()[:80])}...\n\n"
-        f"Story adapted from r/{story['subreddit']}. Original post: {story['url']}"
+        "This is an original story, written for this channel."
     )
     video_id = upload_video.upload_video(video_path, thumbnail_path, story["title"][:100], description)
     logger.info("Done. https://youtu.be/%s (privacyStatus=%s)", video_id, config.YT_PRIVACY_STATUS)

@@ -7,24 +7,25 @@ LOG_DIR = ROOT_DIR / "logs"
 ASSETS_DIR = ROOT_DIR / "assets"
 STATE_DIR = ROOT_DIR / "state"
 
-# --- Reddit source ---
-SUBREDDITS = ["AmItheAsshole", "confession", "tifu"]
-POST_SORT = "top"          # "top", "hot", "new"
-POST_TIME_FILTER = "week"  # used when POST_SORT == "top": hour/day/week/month/year/all
-MIN_UPVOTES = 500
-MIN_BODY_CHARS = 800
-MAX_BODY_CHARS = 6000
-REDDIT_USER_AGENT = "faceless-yt-pipeline/0.1"
-POSTS_TO_FETCH_PER_RUN = 25  # candidates pulled per subreddit before filtering/dedup
-
-# --- Script generation (Anthropic) ---
+# --- Story generation (Anthropic) ---
+# Stories are entirely invented by Claude — no external source (e.g. Reddit) is
+# scraped, which avoids needing separate approval for AI/commercial use of
+# someone else's platform data.
 ANTHROPIC_MODEL = "claude-sonnet-5"
-SCRIPT_STYLE = (
+STORY_GENRES = [
+    "an unexpected twist that recontextualizes everything at the end",
+    "a workplace conflict that escalates and then resolves satisfyingly",
+    "a family secret uncovered years later",
+    "a small act of justice against someone who had it coming",
+    "a stranger's kindness that changes the outcome of a bad day",
+]
+STORY_STYLE = (
     "You are writing a narration script for a faceless YouTube storytelling channel. "
-    "Rewrite the Reddit post as a first-person spoken narration: a strong hook in the "
-    "first sentence, natural spoken cadence, short sentences, no markdown or headers, "
-    "no reference to Reddit, upvotes, or subreddit names, and a satisfying closing line."
+    "Write it as a first-person spoken narration: a strong hook in the first sentence, "
+    "natural spoken cadence, short sentences, no markdown or headers, and a satisfying "
+    "closing line."
 )
+STORY_HISTORY_SIZE = 200  # how many past titles to remember, to steer the model away from repeats
 TARGET_WORDS_PER_MINUTE = 150
 TARGET_VIDEO_MINUTES = (2, 6)  # (min, max) target narration length
 
