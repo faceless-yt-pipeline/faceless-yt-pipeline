@@ -15,6 +15,7 @@ import google.auth.transport.requests
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 
 import config
@@ -72,7 +73,13 @@ def upload_video(video_path: Path, thumbnail_path: Path, title: str, description
     logger.info("Uploaded video https://youtu.be/%s (privacyStatus=%s)", video_id, config.YT_PRIVACY_STATUS)
 
     if thumbnail_path.exists():
-        youtube.thumbnails().set(videoId=video_id, media_body=MediaFileUpload(str(thumbnail_path))).execute()
-        logger.info("Set thumbnail for %s", video_id)
+        try:
+            youtube.thumbnails().set(videoId=video_id, media_body=MediaFileUpload(str(thumbnail_path))).execute()
+            logger.info("Set thumbnail for %s", video_id)
+        except HttpError as exc:
+            logger.warning(
+                "Video uploaded but setting the thumbnail failed (channel may need phone "
+                "verification for custom thumbnails — see youtube.com/verify): %s", exc,
+            )
 
     return video_id
