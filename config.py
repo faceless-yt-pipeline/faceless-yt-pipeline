@@ -23,7 +23,9 @@ STORY_STYLE = (
     "You are writing a narration script for a faceless YouTube storytelling channel. "
     "Write it as a first-person spoken narration: a strong hook in the first sentence, "
     "natural spoken cadence, short sentences, no markdown or headers, and a satisfying "
-    "closing line."
+    "closing line. Do not include suicide, self-harm, or suicidal ideation as a plot "
+    "point or emotional beat, even briefly or as something the narrator only considers "
+    "and moves past — low points should come from other sources of hardship instead."
 )
 STORY_HISTORY_SIZE = 200  # how many past titles to remember, to steer the model away from repeats
 TARGET_WORDS_PER_MINUTE = 150
@@ -66,4 +68,4 @@ YT_CLIENT_SECRETS_FILE = ROOT_DIR / "client_secrets.json"
 YT_TOKEN_FILE = STATE_DIR / "youtube_token.json"
 YT_CATEGORY_ID = "24"  # Entertainment
 YT_PRIVACY_STATUS = "private"  # "private" | "unlisted" | "public" — start private, promote manually
-YT_DEFAULT_TAGS = ["reddit stories", "storytime", "aita"]
+YT_DEFAULT_TAGS = ["quiet confessions", "storytime", "storytelling"]
