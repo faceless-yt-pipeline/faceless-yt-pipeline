@@ -52,11 +52,24 @@ Recommended: run in `review` mode for your first 10-20 videos to sanity-check sc
 
 ## Scheduling it to run automatically
 
-Once you trust the pipeline, run it on a cron job / GitHub Actions / cloud scheduler, e.g. daily at a fixed time:
+**Mac/Linux** — once you trust the pipeline, run it on a cron job / GitHub Actions / cloud scheduler, e.g. daily at a fixed time:
 
 ```cron
 0 10 * * * cd /path/to/faceless-yt-pipeline && /usr/bin/python3 main.py --mode full >> logs/pipeline.log 2>&1
 ```
+
+**Windows** — use `run_pipeline.bat` (already in the project root) with Task Scheduler, since scheduled tasks
+don't reliably inherit an up-to-date PATH. It pins explicit paths to `python.exe` and `ffmpeg`/`ffprobe` before
+running — edit the paths inside it if your install locations differ. Register it with:
+
+```bash
+schtasks /create /tn "Quiet Confessions Daily Upload" /tr "C:\path\to\faceless-yt-pipeline\run_pipeline.bat" /sc daily /st 10:00 /f
+```
+
+This creates an "Interactive only" task (runs only while you're logged in, no Windows password stored). Output
+goes to `logs\scheduled_run.log`. Manage it later with `schtasks /query /tn "Quiet Confessions Daily Upload" /v`,
+`schtasks /run /tn "..."` to trigger it immediately, or `schtasks /delete /tn "..."` to remove it — or use the
+Task Scheduler GUI.
 
 ## Important notes
 
