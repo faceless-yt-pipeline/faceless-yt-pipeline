@@ -47,15 +47,21 @@ def _get_credentials() -> Credentials:
     return creds
 
 
-def upload_video(video_path: Path, thumbnail_path: Path, title: str, description: str) -> str:
-    """Upload video + thumbnail, return the resulting YouTube video ID."""
+def upload_video(
+    video_path: Path,
+    title: str,
+    description: str,
+    thumbnail_path: Path | None = None,
+    tags: list[str] | None = None,
+) -> str:
+    """Upload video (+ optional custom thumbnail), return the resulting YouTube video ID."""
     youtube = build("youtube", "v3", credentials=_get_credentials())
 
     body = {
         "snippet": {
             "title": title[:100],
             "description": description,
-            "tags": config.YT_DEFAULT_TAGS,
+            "tags": tags if tags is not None else config.YT_DEFAULT_TAGS,
             "categoryId": config.YT_CATEGORY_ID,
         },
         "status": {"privacyStatus": config.YT_PRIVACY_STATUS},
@@ -72,7 +78,7 @@ def upload_video(video_path: Path, thumbnail_path: Path, title: str, description
     video_id = response["id"]
     logger.info("Uploaded video https://youtu.be/%s (privacyStatus=%s)", video_id, config.YT_PRIVACY_STATUS)
 
-    if thumbnail_path.exists():
+    if thumbnail_path and thumbnail_path.exists():
         try:
             youtube.thumbnails().set(videoId=video_id, media_body=MediaFileUpload(str(thumbnail_path))).execute()
             logger.info("Set thumbnail for %s", video_id)

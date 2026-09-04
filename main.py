@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 import config
 from scripts import (
     generate_captions,
+    generate_shorts,
     generate_story,
     generate_thumbnail,
     render_video,
@@ -72,7 +73,28 @@ def run(mode: str) -> None:
         f"{' '.join(script.split()[:80])}...\n\n"
         "This is an original story, written for this channel."
     )
-    video_id = upload_video.upload_video(video_path, thumbnail_path, story["title"][:100], description)
+    video_id = upload_video.upload_video(
+        video_path, story["title"][:100], description, thumbnail_path=thumbnail_path,
+    )
+    logger.info("Uploaded full video: https://youtu.be/%s (privacyStatus=%s)", video_id, config.YT_PRIVACY_STATUS)
+
+    if config.SHORTS_ENABLED:
+        short_audio_path, short_captions_path, short_seconds = generate_shorts.build_shorts_assets(
+            script, run_dir,
+        )
+        short_video_path = run_dir / "shorts_video.mp4"
+        render_video.render_video(short_audio_path, short_captions_path, short_video_path)
+
+        short_title = f"{story['title'][:88]} #Shorts"
+        short_description = f"Full story: https://youtu.be/{video_id}\n\n#Shorts"
+        short_id = upload_video.upload_video(
+            short_video_path, short_title, short_description, tags=config.SHORTS_DEFAULT_TAGS,
+        )
+        logger.info(
+            "Uploaded Shorts teaser (%.0fs): https://youtu.be/%s (privacyStatus=%s)",
+            short_seconds, short_id, config.YT_PRIVACY_STATUS,
+        )
+
     logger.info("Done. https://youtu.be/%s (privacyStatus=%s)", video_id, config.YT_PRIVACY_STATUS)
 
 

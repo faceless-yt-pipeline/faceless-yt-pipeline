@@ -69,3 +69,8 @@ YT_TOKEN_FILE = STATE_DIR / "youtube_token.json"
 YT_CATEGORY_ID = "24"  # Entertainment
 YT_PRIVACY_STATUS = "private"  # "private" | "unlisted" | "public" — start private, promote manually
 YT_DEFAULT_TAGS = ["quiet confessions", "storytime", "storytelling"]
+
+# --- Shorts ---
+SHORTS_ENABLED = True
+SHORTS_MAX_SECONDS = 55  # comfortably under YouTube's 60s "classic" Shorts threshold
+SHORTS_DEFAULT_TAGS = ["quiet confessions", "shorts", "storytime"]
