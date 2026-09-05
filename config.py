@@ -67,7 +67,7 @@ THUMB_STROKE_WIDTH = 6
 YT_CLIENT_SECRETS_FILE = ROOT_DIR / "client_secrets.json"
 YT_TOKEN_FILE = STATE_DIR / "youtube_token.json"
 YT_CATEGORY_ID = "24"  # Entertainment
-YT_PRIVACY_STATUS = "private"  # "private" | "unlisted" | "public" — start private, promote manually
+YT_PRIVACY_STATUS = "public"  # "private" | "unlisted" | "public"
 YT_DEFAULT_TAGS = ["quiet confessions", "storytime", "storytelling"]
 
 # --- Hashtags (YouTube shows the first 3 found in a description above the title) ---

@@ -73,7 +73,7 @@ Task Scheduler GUI.
 
 ## Important notes
 
-* Start uploads as "private" or "unlisted" (already default in `config.py`) until you've watched a few end-to-end outputs and trust the pipeline not to publish something broken or off-brand.
+* Start uploads as "private" or "unlisted" in `config.py` (`YT_PRIVACY_STATUS`) until you've watched a few end-to-end outputs and trust the pipeline not to publish something broken or off-brand — this repo is currently set to `"public"` after that trust was established.
 * YouTube's policy on mass-produced/repetitive content has tightened — fully unattended channels risk demonetization or suppression. Keeping the `review` mode checkpoint (even skimming the script/thumbnail before `full` runs) meaningfully reduces this risk and costs you ~2 minutes/video.
 * Since stories are AI-generated rather than true accounts, don't present them as real events in titles/descriptions — check YouTube's disclosure requirements for altered/synthetic content if that's ever ambiguous for your framing.
 * Caption styling, background clip selection logic, and the thumbnail template are deliberately simple — that's the highest-leverage place to spend manual creative effort since it's what actually drives CTR/retention.
