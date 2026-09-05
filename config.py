@@ -72,5 +72,6 @@ YT_DEFAULT_TAGS = ["quiet confessions", "storytime", "storytelling"]
 
 # --- Shorts ---
 SHORTS_ENABLED = True
+SHORTS_PER_VIDEO = 3  # spread evenly across the story: opening, ~1/3, ~2/3
 SHORTS_MAX_SECONDS = 55  # comfortably under YouTube's 60s "classic" Shorts threshold
 SHORTS_DEFAULT_TAGS = ["quiet confessions", "shorts", "storytime"]

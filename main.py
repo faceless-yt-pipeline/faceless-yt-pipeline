@@ -79,21 +79,21 @@ def run(mode: str) -> None:
     logger.info("Uploaded full video: https://youtu.be/%s (privacyStatus=%s)", video_id, config.YT_PRIVACY_STATUS)
 
     if config.SHORTS_ENABLED:
-        short_audio_path, short_captions_path, short_seconds = generate_shorts.build_shorts_assets(
-            script, run_dir,
-        )
-        short_video_path = run_dir / "shorts_video.mp4"
-        render_video.render_video(short_audio_path, short_captions_path, short_video_path)
+        shorts = generate_shorts.build_shorts(script, run_dir)
+        for i, (short_audio_path, short_captions_path, short_seconds) in enumerate(shorts, start=1):
+            short_video_path = run_dir / f"shorts_video_{i}.mp4"
+            render_video.render_video(short_audio_path, short_captions_path, short_video_path)
 
-        short_title = f"{story['title'][:88]} #Shorts"
-        short_description = f"Full story: https://youtu.be/{video_id}\n\n#Shorts"
-        short_id = upload_video.upload_video(
-            short_video_path, short_title, short_description, tags=config.SHORTS_DEFAULT_TAGS,
-        )
-        logger.info(
-            "Uploaded Shorts teaser (%.0fs): https://youtu.be/%s (privacyStatus=%s)",
-            short_seconds, short_id, config.YT_PRIVACY_STATUS,
-        )
+            part_suffix = f" (Part {i}/{len(shorts)})" if len(shorts) > 1 else ""
+            short_title = f"{story['title'][:80]}{part_suffix} #Shorts"
+            short_description = f"Full story: https://youtu.be/{video_id}\n\n#Shorts"
+            short_id = upload_video.upload_video(
+                short_video_path, short_title, short_description, tags=config.SHORTS_DEFAULT_TAGS,
+            )
+            logger.info(
+                "Uploaded Shorts teaser %d/%d (%.0fs): https://youtu.be/%s (privacyStatus=%s)",
+                i, len(shorts), short_seconds, short_id, config.YT_PRIVACY_STATUS,
+            )
 
     logger.info("Done. https://youtu.be/%s (privacyStatus=%s)", video_id, config.YT_PRIVACY_STATUS)
 
