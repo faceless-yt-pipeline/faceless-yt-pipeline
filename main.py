@@ -71,7 +71,8 @@ def run(mode: str) -> None:
 
     description = (
         f"{' '.join(script.split()[:80])}...\n\n"
-        "This is an original story, written for this channel."
+        "This is an original story, written for this channel.\n\n"
+        + " ".join(config.VIDEO_HASHTAGS)
     )
     video_id = upload_video.upload_video(
         video_path, story["title"][:100], description, thumbnail_path=thumbnail_path,
@@ -86,7 +87,10 @@ def run(mode: str) -> None:
 
             part_suffix = f" (Part {i}/{len(shorts)})" if len(shorts) > 1 else ""
             short_title = f"{story['title'][:80]}{part_suffix} #Shorts"
-            short_description = f"Full story: https://youtu.be/{video_id}\n\n#Shorts"
+            short_description = (
+                f"Full story: https://youtu.be/{video_id}\n\n"
+                + " ".join(config.SHORTS_HASHTAGS)
+            )
             short_id = upload_video.upload_video(
                 short_video_path, short_title, short_description, tags=config.SHORTS_DEFAULT_TAGS,
             )

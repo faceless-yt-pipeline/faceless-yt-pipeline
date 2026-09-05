@@ -70,6 +70,10 @@ YT_CATEGORY_ID = "24"  # Entertainment
 YT_PRIVACY_STATUS = "private"  # "private" | "unlisted" | "public" — start private, promote manually
 YT_DEFAULT_TAGS = ["quiet confessions", "storytime", "storytelling"]
 
+# --- Hashtags (YouTube shows the first 3 found in a description above the title) ---
+VIDEO_HASHTAGS = ["#QuietConfessions", "#StoryTime", "#Storytelling"]
+SHORTS_HASHTAGS = ["#QuietConfessions", "#Shorts", "#StoryTime"]
+
 # --- Shorts ---
 SHORTS_ENABLED = True
 SHORTS_PER_VIDEO = 3  # spread evenly across the story: opening, ~1/3, ~2/3
