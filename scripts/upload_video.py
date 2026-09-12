@@ -12,6 +12,7 @@ import logging
 from pathlib import Path
 
 import google.auth.transport.requests
+from google.auth.exceptions import RefreshError
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
@@ -32,7 +33,17 @@ def _get_credentials() -> Credentials:
 
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(google.auth.transport.requests.Request())
+            try:
+                creds.refresh(google.auth.transport.requests.Request())
+            except RefreshError as exc:
+                raise RuntimeError(
+                    "YouTube sign-in has expired and can't refresh automatically — this is "
+                    "expected roughly every 7 days while the OAuth app is in Google's "
+                    "\"Testing\" publish status (unverified apps get short-lived refresh "
+                    f"tokens). Fix: delete {config.YT_TOKEN_FILE} and rerun main.py — it will "
+                    "open a browser for you to sign in again, then run unattended for "
+                    "another ~7 days."
+                ) from exc
         else:
             if not config.YT_CLIENT_SECRETS_FILE.exists():
                 raise RuntimeError(
