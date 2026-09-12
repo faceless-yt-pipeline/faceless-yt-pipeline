@@ -73,30 +73,53 @@ def _split_into_scene_texts(script: str, target_scenes: int) -> list[str]:
     return groups
 
 
+_PROMPT_BATCH_SIZE = 15  # smaller batches hit the exact requested count far more reliably
+                           # than one large call — a 58-scene story asked for in one shot
+                           # once silently returned only 57 prompts.
+_PROMPT_MAX_ATTEMPTS = 2
+
+
 def _generate_image_prompts(scene_texts: list[str]) -> list[str]:
+    all_prompts = []
+    for start in range(0, len(scene_texts), _PROMPT_BATCH_SIZE):
+        batch = scene_texts[start:start + _PROMPT_BATCH_SIZE]
+        all_prompts.extend(_generate_image_prompts_batch(batch))
+    return all_prompts
+
+
+def _generate_image_prompts_batch(scene_texts: list[str]) -> list[str]:
     numbered = "\n\n".join(f"Scene {i + 1}: {text}" for i, text in enumerate(scene_texts))
     # Response length scales with scene count (one prompt per scene), so a fixed cap that's
     # fine for a handful of scenes truncates the JSON once it's dozens.
     max_tokens = min(16000, max(2000, 300 + len(scene_texts) * 120))
 
     client = anthropic.Anthropic()
-    response = client.messages.create(
-        model=config.ANTHROPIC_MODEL,
-        max_tokens=max_tokens,
-        system=_IMAGE_PROMPT_SYSTEM.format(count=len(scene_texts)),
-        messages=[{"role": "user", "content": numbered}],
-    )
-    text = "".join(block.text for block in response.content if block.type == "text").strip()
-    text = text.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+    last_error = None
+    for attempt in range(1, _PROMPT_MAX_ATTEMPTS + 1):
+        response = client.messages.create(
+            model=config.ANTHROPIC_MODEL,
+            max_tokens=max_tokens,
+            system=_IMAGE_PROMPT_SYSTEM.format(count=len(scene_texts)),
+            messages=[{"role": "user", "content": numbered}],
+        )
+        text = "".join(block.text for block in response.content if block.type == "text").strip()
+        text = text.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
 
-    try:
-        prompts = json.loads(text)
-    except json.JSONDecodeError as exc:
-        raise RuntimeError(f"Could not parse image prompts from model output:\n{text[:500]}") from exc
-    if not isinstance(prompts, list) or len(prompts) != len(scene_texts):
+        try:
+            prompts = json.loads(text)
+        except json.JSONDecodeError as exc:
+            last_error = f"Could not parse image prompts from model output:\n{text[:500]}"
+            logger.warning("%s (attempt %d/%d)", last_error, attempt, _PROMPT_MAX_ATTEMPTS)
+            continue
+
+        if isinstance(prompts, list) and len(prompts) == len(scene_texts):
+            return prompts
+
         got = len(prompts) if isinstance(prompts, list) else "invalid JSON"
-        raise RuntimeError(f"Expected {len(scene_texts)} image prompts, got {got}")
-    return prompts
+        last_error = f"Expected {len(scene_texts)} image prompts, got {got}"
+        logger.warning("%s (attempt %d/%d)", last_error, attempt, _PROMPT_MAX_ATTEMPTS)
+
+    raise RuntimeError(last_error)
 
 
 def _generate_image(prompt: str, out_path: Path, image_size: str | None = None) -> None:
