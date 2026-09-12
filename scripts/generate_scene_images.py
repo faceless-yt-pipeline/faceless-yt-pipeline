@@ -99,7 +99,7 @@ def _generate_image_prompts(scene_texts: list[str]) -> list[str]:
     return prompts
 
 
-def _generate_image(prompt: str, out_path: Path) -> None:
+def _generate_image(prompt: str, out_path: Path, image_size: str | None = None) -> None:
     api_key = os.environ.get("FAL_KEY")
     if not api_key:
         raise RuntimeError(
@@ -110,7 +110,7 @@ def _generate_image(prompt: str, out_path: Path) -> None:
     response = requests.post(
         f"https://fal.run/{config.FAL_MODEL}",
         headers={"Authorization": f"Key {api_key}"},
-        json={"prompt": prompt, "image_size": config.SCENE_IMAGE_SIZE, "num_images": 1},
+        json={"prompt": prompt, "image_size": image_size or config.SCENE_IMAGE_SIZE, "num_images": 1},
         timeout=60,
     )
     response.raise_for_status()
@@ -119,6 +119,52 @@ def _generate_image(prompt: str, out_path: Path) -> None:
     image_response = requests.get(image_url, timeout=60)
     image_response.raise_for_status()
     out_path.write_bytes(image_response.content)
+
+
+_THUMBNAIL_PROMPT_SYSTEM = (
+    "You are writing a YouTube thumbnail for the story below: a dedicated image-generation "
+    "prompt, plus a short on-image caption (separate from the video's actual title).\n\n"
+    "For the image: pick the story's single most visually striking, emotionally charged "
+    "moment — something that would make someone stop scrolling. Describe it as a close, "
+    "dramatic, cinematic shot: concrete setting, strong lighting, clear emotion on any "
+    "character's face. Never include text, letters, or words in the image description. "
+    "Text-to-image models render readable text as garbled nonsense, so also avoid describing "
+    "anything a viewer would expect to read: shop signs, labels, book/magazine covers, "
+    "screens, newspapers, storefronts with signage. If a setting would naturally have one, "
+    "either frame the shot to exclude it or describe it as blurred, out of focus, or turned "
+    "away from camera.\n\n"
+    "For the caption: 3-6 words, punchy and curiosity-driving, in Title Case — this sits as "
+    "bold text over the bottom of the thumbnail image itself, so it must be much shorter than "
+    "the video's full title, not a restatement of it.\n\n"
+    'Respond with ONLY a JSON object, nothing else: {{"image_prompt": "...", "caption": "..."}}'
+)
+
+
+def generate_thumbnail_image(script: str, out_path: Path) -> str:
+    """Generate one dedicated, high-impact image for the video's thumbnail (not a narration scene).
+
+    Returns the short on-image caption to overlay (distinct from the video's actual title,
+    which is too long to read well as thumbnail text).
+    """
+    client = anthropic.Anthropic()
+    response = client.messages.create(
+        model=config.ANTHROPIC_MODEL,
+        max_tokens=400,
+        system=_THUMBNAIL_PROMPT_SYSTEM,
+        messages=[{"role": "user", "content": script}],
+    )
+    text = "".join(block.text for block in response.content if block.type == "text").strip()
+    text = text.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"Could not parse thumbnail prompt/caption from model output:\n{text[:500]}") from exc
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    _generate_image(parsed["image_prompt"], out_path, image_size=config.THUMBNAIL_IMAGE_SIZE)
+    logger.info("Generated thumbnail image (caption %r): %s", parsed["caption"], parsed["image_prompt"][:80])
+    return parsed["caption"]
 
 
 def generate_scenes(script: str, words: list[dict], scenes_dir: Path) -> list[tuple[Path, float]]:

@@ -1,8 +1,8 @@
-"""Generate a click-friendly thumbnail from the template + story hook."""
+"""Generate a click-friendly thumbnail from a story hook, over an AI scene image or the template."""
 import logging
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 import config
 
@@ -12,6 +12,8 @@ _SIDE_MARGIN = 80
 _VERTICAL_MARGIN = 60
 _MIN_FONT_SIZE = 40
 _FONT_STEP = 6
+_SCRIM_HEIGHT_FRACTION = 0.5  # fraction of thumbnail height covered by the bottom gradient scrim
+_SCRIM_MAX_ALPHA = 210
 
 
 def _wrap_to_width(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFont, max_width: int) -> str:
@@ -44,11 +46,33 @@ def _fit_text(draw: ImageDraw.ImageDraw, text: str, max_width: int, max_height: 
     return font, wrapped, text_w, text_h  # best effort at the minimum size
 
 
-def generate_thumbnail(hook_text: str, out_path: Path) -> None:
-    if not config.THUMB_TEMPLATE.exists():
-        raise RuntimeError(f"Thumbnail template not found at {config.THUMB_TEMPLATE}. Add one before rendering.")
+def _add_bottom_scrim(image: Image.Image) -> Image.Image:
+    """Dark gradient over the bottom of the image so text stays legible over a busy photo."""
+    width, height = image.size
+    scrim_height = int(height * _SCRIM_HEIGHT_FRACTION)
+    scrim = Image.new("L", (1, scrim_height), color=0)
+    for y in range(scrim_height):
+        scrim.putpixel((0, y), int(_SCRIM_MAX_ALPHA * (y / scrim_height)))
+    scrim = scrim.resize((width, scrim_height))
 
-    image = Image.open(config.THUMB_TEMPLATE).convert("RGB").resize(config.THUMB_SIZE)
+    overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    black = Image.new("RGBA", (width, scrim_height), (0, 0, 0, 255))
+    overlay.paste(black, (0, height - scrim_height), mask=scrim)
+    return Image.alpha_composite(image.convert("RGBA"), overlay).convert("RGB")
+
+
+def generate_thumbnail(hook_text: str, out_path: Path, background_image_path: Path | None = None) -> None:
+    if background_image_path and background_image_path.exists():
+        image = Image.open(background_image_path).convert("RGB")
+        image = ImageOps.fit(image, config.THUMB_SIZE, Image.LANCZOS)
+        image = _add_bottom_scrim(image)
+        text_anchor = "bottom"
+    else:
+        if not config.THUMB_TEMPLATE.exists():
+            raise RuntimeError(f"Thumbnail template not found at {config.THUMB_TEMPLATE}. Add one before rendering.")
+        image = Image.open(config.THUMB_TEMPLATE).convert("RGB").resize(config.THUMB_SIZE)
+        text_anchor = "center"
+
     draw = ImageDraw.Draw(image)
 
     max_width = config.THUMB_SIZE[0] - 2 * _SIDE_MARGIN
@@ -56,7 +80,10 @@ def generate_thumbnail(hook_text: str, out_path: Path) -> None:
     font, wrapped, text_w, text_h = _fit_text(draw, hook_text.upper(), max_width, max_height)
 
     x = (config.THUMB_SIZE[0] - text_w) / 2
-    y = (config.THUMB_SIZE[1] - text_h) / 2
+    if text_anchor == "bottom":
+        y = config.THUMB_SIZE[1] - _VERTICAL_MARGIN - text_h
+    else:
+        y = (config.THUMB_SIZE[1] - text_h) / 2
 
     draw.multiline_text(
         (x, y), wrapped, font=font, fill=config.THUMB_FONT_COLOR,
@@ -66,4 +93,4 @@ def generate_thumbnail(hook_text: str, out_path: Path) -> None:
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     image.save(out_path)
-    logger.info("Wrote thumbnail to %s (font size %d)", out_path, font.size)
+    logger.info("Wrote thumbnail to %s (font size %d, background=%s)", out_path, font.size, text_anchor)

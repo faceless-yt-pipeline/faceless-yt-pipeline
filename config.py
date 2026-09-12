@@ -61,6 +61,7 @@ BACKGROUND_DIR = ASSETS_DIR / "backgrounds"
 USE_AI_SCENE_IMAGES = True
 FAL_MODEL = "fal-ai/flux/schnell"  # https://fal.ai/models/fal-ai/flux/schnell
 SCENE_IMAGE_SIZE = "portrait_16_9"  # ~9:16, matches VIDEO_WIDTH x VIDEO_HEIGHT
+THUMBNAIL_IMAGE_SIZE = "landscape_16_9"  # matches THUMB_SIZE's aspect ratio
 SCENE_SECONDS_TARGET = 5  # aim for roughly one scene per this many seconds of narration
 SCENE_MIN_COUNT = 4  # floor, so even a short Shorts teaser gets a few cuts
 SCENE_MAX_COUNT = 75  # cap (a 6-min video at the 5s target needs ~72), so cost stays bounded

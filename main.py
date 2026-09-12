@@ -71,8 +71,14 @@ def run(mode: str) -> None:
     video_path = run_dir / "video.mp4"
     render_video.render_video(audio_path, captions_path, video_path, scene_images=scene_images)
 
+    thumbnail_bg_path = None
+    thumbnail_text = story["title"]
+    if config.USE_AI_SCENE_IMAGES:
+        thumbnail_bg_path = run_dir / "thumbnail_bg.png"
+        thumbnail_text = generate_scene_images.generate_thumbnail_image(script, thumbnail_bg_path)
+
     thumbnail_path = run_dir / "thumbnail.png"
-    generate_thumbnail.generate_thumbnail(story["title"], thumbnail_path)
+    generate_thumbnail.generate_thumbnail(thumbnail_text, thumbnail_path, background_image_path=thumbnail_bg_path)
 
     description = (
         f"{' '.join(script.split()[:80])}...\n\n"
