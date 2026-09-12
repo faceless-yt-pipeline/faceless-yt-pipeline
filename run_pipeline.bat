@@ -7,4 +7,8 @@ echo [%date% %time%] after cd, cwd=%cd% errorlevel=%errorlevel% >> "%LOG%"
 where python >> "%LOG%" 2>&1
 where ffmpeg >> "%LOG%" 2>&1
 python main.py --mode full >> "%LOG%" 2>&1
-echo [%date% %time%] python exited with errorlevel %errorlevel% >> "%LOG%"
+set "PYEXIT=%errorlevel%"
+echo [%date% %time%] python exited with errorlevel %PYEXIT% >> "%LOG%"
+if not "%PYEXIT%"=="0" (
+    powershell -NoProfile -ExecutionPolicy Bypass -File "C:\Users\jespe\.claude\faceless-yt-pipeline\notify_failure.ps1" -Message "Exited with code %PYEXIT%. Check logs\scheduled_run.log for details." >> "%LOG%" 2>&1
+)
