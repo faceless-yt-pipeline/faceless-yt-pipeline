@@ -22,6 +22,7 @@ using Reddit data for AI/commercial purposes without separate written approval.)
 
 2. API keys — set these as environment variables (see `.env.example`):
    * `ANTHROPIC_API_KEY` — from console.anthropic.com
+   * `FAL_KEY` — from fal.ai/dashboard/keys, used to generate the per-scene background images (see "Scene images" below). Not needed if `config.USE_AI_SCENE_IMAGES = False`.
    * YouTube: download OAuth `client_secrets.json` from Google Cloud Console into the project root (see comments in `scripts/upload_video.py`)
 
    Voiceover uses `edge-tts` (Microsoft Edge's free online neural voices) — no API key needed. Run
@@ -29,9 +30,22 @@ using Reddit data for AI/commercial purposes without separate written approval.)
    `EDGE_TTS_VOICE` in `config.py`.
 
 3. Assets — add before running:
-   * `assets/backgrounds/*.mp4` — royalty-free loopable background footage (satisfying clips, gameplay, ambient scenes — search Pexels/Storyblocks)
+   * `assets/backgrounds/*.mp4` — royalty-free loopable background footage, only used as a fallback when `config.USE_AI_SCENE_IMAGES = False` (satisfying clips, gameplay, ambient scenes — search Pexels/Storyblocks)
    * `assets/thumb_template.png` — a base thumbnail template image
    * `assets/fonts/Anton-Regular.ttf` — or any bold font you like (Google Fonts)
+
+## Scene images
+
+By default (`config.USE_AI_SCENE_IMAGES = True`), the video background isn't a looping stock
+clip — it's a sequence of AI-generated still images, one per story beat, each with a slow
+Ken Burns zoom, generated to match the story (`scripts/generate_scene_images.py`). This applies
+to both the full video and each Shorts teaser (a short's images are generated separately from
+its own excerpt, since Shorts re-synthesize their own voiceover). Images come from fal.ai's
+hosted FLUX.1 [schnell] model at $0.003/image; scene count scales with each clip's length
+(`SCENE_SECONDS_TARGET`, `SCENE_MIN_COUNT`/`SCENE_MAX_COUNT` in `config.py`) — roughly 3-4
+images per Shorts teaser and 8-18 per full video. Set `USE_AI_SCENE_IMAGES = False` in
+`config.py` to fall back to the old random-stock-clip behavior instead (no `FAL_KEY` needed
+in that case).
 
 4. Edit `config.py` — story genres/style, voice ID, upload schedule.
 

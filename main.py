@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 import config
 from scripts import (
     generate_captions,
+    generate_scene_images,
     generate_shorts,
     generate_story,
     generate_thumbnail,
@@ -60,11 +61,15 @@ def run(mode: str) -> None:
         logger.info("Dry-run mode: stopping after voiceover. Output in %s", run_dir)
         return
 
+    scene_images = None
+    if config.USE_AI_SCENE_IMAGES:
+        scene_images = generate_scene_images.generate_scenes(script, words, run_dir / "scenes")
+
     captions_path = run_dir / "captions.ass"
     generate_captions.build_captions(words, captions_path)
 
     video_path = run_dir / "video.mp4"
-    render_video.render_video(audio_path, captions_path, video_path)
+    render_video.render_video(audio_path, captions_path, video_path, scene_images=scene_images)
 
     thumbnail_path = run_dir / "thumbnail.png"
     generate_thumbnail.generate_thumbnail(story["title"], thumbnail_path)
@@ -81,9 +86,11 @@ def run(mode: str) -> None:
 
     if config.SHORTS_ENABLED:
         shorts = generate_shorts.build_shorts(script, run_dir)
-        for i, (short_audio_path, short_captions_path, short_seconds) in enumerate(shorts, start=1):
+        for i, (short_audio_path, short_captions_path, short_seconds, short_scene_images) in enumerate(shorts, start=1):
             short_video_path = run_dir / f"shorts_video_{i}.mp4"
-            render_video.render_video(short_audio_path, short_captions_path, short_video_path)
+            render_video.render_video(
+                short_audio_path, short_captions_path, short_video_path, scene_images=short_scene_images,
+            )
 
             part_suffix = f" (Part {i}/{len(shorts)})" if len(shorts) > 1 else ""
             short_title = f"{story['title'][:80]}{part_suffix} #Shorts"

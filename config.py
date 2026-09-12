@@ -54,6 +54,19 @@ VIDEO_HEIGHT = 1920
 VIDEO_FPS = 30
 BACKGROUND_DIR = ASSETS_DIR / "backgrounds"
 
+# --- Scene images (AI-generated, replacing the stock background-clip loop) ---
+# False falls back to a random looping clip from BACKGROUND_DIR (the old behavior) —
+# useful if FAL_KEY isn't set yet, or to A/B the two approaches. Applies to both the
+# full video and Shorts.
+USE_AI_SCENE_IMAGES = True
+FAL_MODEL = "fal-ai/flux/schnell"  # https://fal.ai/models/fal-ai/flux/schnell
+SCENE_IMAGE_SIZE = "portrait_16_9"  # ~9:16, matches VIDEO_WIDTH x VIDEO_HEIGHT
+SCENE_SECONDS_TARGET = 5  # aim for roughly one scene per this many seconds of narration
+SCENE_MIN_COUNT = 4  # floor, so even a short Shorts teaser gets a few cuts
+SCENE_MAX_COUNT = 75  # cap (a 6-min video at the 5s target needs ~72), so cost stays bounded
+SCENE_MIN_SECONDS = 3.0  # floor per scene, so fast-moving beats still get a readable image
+SCENE_ZOOM_MAX = 1.15  # Ken Burns: each image zooms in from 1.0x to this by the end of its scene
+
 # --- Thumbnail ---
 THUMB_TEMPLATE = ASSETS_DIR / "thumb_template.png"
 THUMB_SIZE = (1280, 720)

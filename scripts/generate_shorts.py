@@ -13,7 +13,7 @@ import re
 from pathlib import Path
 
 import config
-from scripts import generate_captions
+from scripts import generate_captions, generate_scene_images
 from scripts.generate_voice import generate_voice
 
 logger = logging.getLogger(__name__)
@@ -60,12 +60,15 @@ def _segment_starts(sentences: list[str], count: int) -> list[int]:
     return unique or [0]
 
 
-def build_shorts(script: str, out_dir: Path) -> list[tuple[Path, Path, float]]:
+def build_shorts(script: str, out_dir: Path) -> list[tuple[Path, Path, float, list]]:
     """Build config.SHORTS_PER_VIDEO teasers spread across the story.
 
-    Returns a list of (short_audio_path, short_captions_path, duration_seconds),
-    one per teaser, in story order. Short stories may yield fewer than
-    SHORTS_PER_VIDEO if there isn't room for that many distinct starting points.
+    Returns a list of (short_audio_path, short_captions_path, duration_seconds, scene_images),
+    one per teaser, in story order. scene_images is None when config.USE_AI_SCENE_IMAGES is
+    False, otherwise a list of (image_path, duration_seconds) covering the teaser, generated
+    the same way as the full video's (see generate_scene_images.generate_scenes). Short stories
+    may yield fewer than SHORTS_PER_VIDEO if there isn't room for that many distinct starting
+    points.
     """
     sentences = _SENTENCE_SPLIT.split(script.strip())
     starts = _segment_starts(sentences, config.SHORTS_PER_VIDEO)
@@ -80,8 +83,12 @@ def build_shorts(script: str, out_dir: Path) -> list[tuple[Path, Path, float]]:
         captions_path = out_dir / f"shorts_captions_{i}.ass"
         generate_captions.build_captions(words, captions_path)
 
+        scene_images = None
+        if config.USE_AI_SCENE_IMAGES:
+            scene_images = generate_scene_images.generate_scenes(teaser, words, out_dir / f"shorts_{i}_scenes")
+
         duration = words[-1]["end"] if words else 0.0
         logger.info("Built Shorts teaser %d/%d: %d words, ~%.1fs", i, len(starts), len(words), duration)
-        results.append((audio_path, captions_path, duration))
+        results.append((audio_path, captions_path, duration, scene_images))
 
     return results
