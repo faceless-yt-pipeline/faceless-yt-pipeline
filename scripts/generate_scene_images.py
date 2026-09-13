@@ -77,14 +77,40 @@ _PROMPT_BATCH_SIZE = 15  # smaller batches hit the exact requested count far mor
                            # than one large call — a 58-scene story asked for in one shot
                            # once silently returned only 57 prompts.
 _PROMPT_MAX_ATTEMPTS = 2
+_FALLBACK_IMAGE_PROMPT = (
+    "Abstract, moody, out-of-focus cinematic background: soft bokeh lighting, muted "
+    "color palette, no discernible subject or text."
+)
 
 
 def _generate_image_prompts(scene_texts: list[str]) -> list[str]:
     all_prompts = []
     for start in range(0, len(scene_texts), _PROMPT_BATCH_SIZE):
         batch = scene_texts[start:start + _PROMPT_BATCH_SIZE]
-        all_prompts.extend(_generate_image_prompts_batch(batch))
+        all_prompts.extend(_generate_prompts_with_fallback(batch))
     return all_prompts
+
+
+def _generate_prompts_with_fallback(scene_texts: list[str]) -> list[str]:
+    """Try a batch call; on repeated failure (e.g. a safety-classifier refusal — seen once
+    on entirely benign workplace-drama text, so not something to just avoid by rewording),
+    split the batch and retry the halves separately, isolating whichever scene(s) are
+    actually the problem instead of failing the whole batch over one bad scene. If a single
+    scene still won't succeed after that, fall back to a generic neutral image for just
+    that scene rather than losing the entire video over it.
+    """
+    try:
+        return _generate_image_prompts_batch(scene_texts)
+    except RuntimeError as exc:
+        if len(scene_texts) == 1:
+            logger.warning("Scene never got an image prompt (%s) — using a generic fallback image.", exc)
+            return [_FALLBACK_IMAGE_PROMPT]
+        mid = len(scene_texts) // 2
+        logger.warning("Batch of %d scenes failed (%s) — splitting and retrying separately.", len(scene_texts), exc)
+        return (
+            _generate_prompts_with_fallback(scene_texts[:mid])
+            + _generate_prompts_with_fallback(scene_texts[mid:])
+        )
 
 
 def _generate_image_prompts_batch(scene_texts: list[str]) -> list[str]:
