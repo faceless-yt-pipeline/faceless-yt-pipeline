@@ -13,6 +13,7 @@ import json
 import logging
 import os
 import re
+import time
 from pathlib import Path
 
 import anthropic
@@ -148,6 +149,10 @@ def _generate_image_prompts_batch(scene_texts: list[str]) -> list[str]:
     raise RuntimeError(last_error)
 
 
+_IMAGE_MAX_ATTEMPTS = 3
+_IMAGE_RETRY_BASE_DELAY = 3  # seconds; doubles each attempt
+
+
 def _generate_image(prompt: str, out_path: Path, image_size: str | None = None) -> None:
     api_key = os.environ.get("FAL_KEY")
     if not api_key:
@@ -156,18 +161,31 @@ def _generate_image(prompt: str, out_path: Path, image_size: str | None = None) 
             "and add it to .env."
         )
 
-    response = requests.post(
-        f"https://fal.run/{config.FAL_MODEL}",
-        headers={"Authorization": f"Key {api_key}"},
-        json={"prompt": prompt, "image_size": image_size or config.SCENE_IMAGE_SIZE, "num_images": 1},
-        timeout=60,
-    )
-    response.raise_for_status()
-    image_url = response.json()["images"][0]["url"]
+    last_error = None
+    for attempt in range(1, _IMAGE_MAX_ATTEMPTS + 1):
+        try:
+            response = requests.post(
+                f"https://fal.run/{config.FAL_MODEL}",
+                headers={"Authorization": f"Key {api_key}"},
+                json={"prompt": prompt, "image_size": image_size or config.SCENE_IMAGE_SIZE, "num_images": 1},
+                timeout=60,
+            )
+            response.raise_for_status()
+            image_url = response.json()["images"][0]["url"]
 
-    image_response = requests.get(image_url, timeout=60)
-    image_response.raise_for_status()
-    out_path.write_bytes(image_response.content)
+            image_response = requests.get(image_url, timeout=60)
+            image_response.raise_for_status()
+            out_path.write_bytes(image_response.content)
+            return
+        except requests.exceptions.RequestException as exc:
+            last_error = exc
+            logger.warning(
+                "Image request failed (attempt %d/%d): %s", attempt, _IMAGE_MAX_ATTEMPTS, exc,
+            )
+            if attempt < _IMAGE_MAX_ATTEMPTS:
+                time.sleep(_IMAGE_RETRY_BASE_DELAY * attempt)
+
+    raise RuntimeError(f"Image generation failed after {_IMAGE_MAX_ATTEMPTS} attempts: {last_error}") from last_error
 
 
 _THUMBNAIL_PROMPT_SYSTEM = (
