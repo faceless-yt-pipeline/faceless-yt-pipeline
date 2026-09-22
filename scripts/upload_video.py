@@ -82,7 +82,9 @@ def upload_video(
 
     response = None
     while response is None:
-        status, response = request.next_chunk()
+        # num_retries=0 is googleapiclient's default, meaning no retries at all — a plain
+        # DNS/connection blip mid-upload crashed the whole run instead of just retrying.
+        status, response = request.next_chunk(num_retries=3)
         if status:
             logger.info("Upload progress: %d%%", int(status.progress() * 100))
 
@@ -91,7 +93,9 @@ def upload_video(
 
     if thumbnail_path and thumbnail_path.exists():
         try:
-            youtube.thumbnails().set(videoId=video_id, media_body=MediaFileUpload(str(thumbnail_path))).execute()
+            youtube.thumbnails().set(
+                videoId=video_id, media_body=MediaFileUpload(str(thumbnail_path)),
+            ).execute(num_retries=3)
             logger.info("Set thumbnail for %s", video_id)
         except HttpError as exc:
             logger.warning(
